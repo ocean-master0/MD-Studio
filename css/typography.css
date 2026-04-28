@@ -1,0 +1,316 @@
+/* ═══════════════════════════════════════════════
+   TYPOGRAPHY.CSS — MD Studio v2.0
+   Kindle-quality reading typography
+   ═══════════════════════════════════════════════ */
+
+:root {
+    --base-font-size : 18px;
+    --line-height    : 1.8;
+    --reading-width  : 720px;
+}
+
+/* ─── Reader Content Base ────────────────────── */
+.reader-content {
+    font-size        : var(--base-font-size);
+    line-height      : var(--line-height);
+    font-family      : var(--font-body);
+    max-width        : var(--reading-width);
+    width            : 100%;
+    transition       : font-size 0.2s ease, max-width 0.3s ease, line-height 0.2s ease;
+    letter-spacing   : 0.01em;
+    word-spacing     : 0.02em;
+    text-rendering   : optimizeLegibility;
+    -webkit-font-smoothing : antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings  : "liga" 1, "kern" 1;
+}
+
+/* ─── Headings ───────────────────────────────── */
+.reader-content h1,
+.reader-content h2,
+.reader-content h3,
+.reader-content h4 {
+    margin-top   : 1.8em;
+    margin-bottom: 0.7em;
+    font-weight  : 700;
+    line-height  : 1.3;
+    letter-spacing: -0.02em;
+}
+
+.reader-content h1 {
+    font-size   : clamp(1.8rem, 4vw, 2.4rem);
+    margin-top  : 0;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 0.4em;
+}
+
+.reader-content h2 {
+    font-size   : clamp(1.4rem, 3vw, 1.8rem);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.3em;
+}
+
+.reader-content h3 { font-size: clamp(1.15rem, 2.5vw, 1.4rem); }
+.reader-content h4 { font-size: 1.1em; }
+
+/* Heading anchor link — visible on hover */
+.heading-anchor {
+    opacity        : 0;
+    color          : var(--accent-color);
+    text-decoration: none;
+    margin-right   : 0.4em;
+    font-size      : 0.8em;
+    font-weight    : 400;
+    transition     : opacity 0.2s;
+}
+
+.reader-content h1:hover .heading-anchor,
+.reader-content h2:hover .heading-anchor,
+.reader-content h3:hover .heading-anchor,
+.reader-content h4:hover .heading-anchor { opacity: 1; }
+
+/* ─── Paragraphs ─────────────────────────────── */
+.reader-content p {
+    margin-bottom: 1.4em;
+    orphans: 3;
+    widows : 3;
+}
+
+/* ─── Lists ──────────────────────────────────── */
+.reader-content ul,
+.reader-content ol {
+    margin-bottom: 1.4em;
+    padding-left : 1.6em;
+}
+
+.reader-content li { margin-bottom: 0.5em; }
+
+/* Task list items (GitHub-style) */
+.reader-content .task-list-item {
+    list-style : none;
+    margin-left: -1.6em;
+    padding-left: 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5em;
+}
+
+.reader-content .task-list-item input[type="checkbox"] {
+    margin-top   : 0.25em;
+    accent-color : var(--accent-color);
+    flex-shrink  : 0;
+}
+
+/* ─── Links ──────────────────────────────────── */
+.reader-content a {
+    color          : var(--accent-color);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transition     : opacity 0.2s;
+}
+
+.reader-content a:hover { opacity: 0.75; }
+
+/* ─── Blockquote ─────────────────────────────── */
+.reader-content blockquote {
+    position    : relative;
+    border-left : 4px solid var(--accent-color);
+    margin      : 1.8em 0;
+    padding     : 1em 1.5em;
+    background  : rgba(128,128,128,0.06);
+    border-radius: 0 8px 8px 0;
+    font-style  : italic;
+}
+
+.reader-content blockquote::before {
+    content    : '\201C';
+    position   : absolute;
+    top        : -0.2em;
+    left       : 0.3em;
+    font-size  : 3em;
+    color      : var(--accent-color);
+    opacity    : 0.18;
+    font-family: Georgia, serif;
+    line-height: 1;
+}
+
+/* ─── Horizontal Rule ────────────────────────── */
+.reader-content hr {
+    border    : 0;
+    height    : 1px;
+    background: var(--border-color);
+    margin    : 2.5em 0;
+}
+
+/* ─── Images ─────────────────────────────────── */
+.reader-content img {
+    max-width    : 100%;
+    height       : auto;
+    border-radius: 8px;
+    margin       : 1.5em 0;
+    display      : block;
+    box-shadow   : 0 4px 12px rgba(0,0,0,0.12);
+}
+
+/* ─── Inline Code ────────────────────────────── */
+.reader-content :not(pre) > code {
+    background   : rgba(128,128,128,0.12);
+    padding      : 0.15em 0.45em;
+    border-radius: 4px;
+    font-family  : var(--font-mono);
+    font-size    : 0.87em;
+    border       : 1px solid rgba(128,128,128,0.15);
+    white-space  : nowrap;
+    color        : inherit;
+}
+
+/* ─── Code Block (pre) ───────────────────────── */
+.reader-content pre {
+    position     : relative;
+    border-radius: 8px;
+    margin       : 1.8em 0;
+    background   : var(--code-bg) !important;
+    padding      : 0;
+    overflow     : hidden;
+}
+
+/* Language badge via ::before using data-language attribute */
+.reader-content pre::before {
+    content       : attr(data-language);
+    display       : block;
+    padding       : 7px 16px;
+    background    : rgba(255,255,255,0.06);
+    font-family   : var(--font-mono);
+    font-size     : 0.72rem;
+    color         : rgba(255,255,255,0.45);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-bottom : 1px solid rgba(255,255,255,0.08);
+}
+
+.reader-content pre code {
+    display          : block;
+    background       : transparent !important;
+    border           : none !important;
+    color            : #abb2bf;
+    padding          : 1.2em 1.4em !important;
+    overflow-x       : auto;
+    line-height      : 1.55;
+    font-size        : 0.87em;
+    font-family      : var(--font-mono);
+    scrollbar-width  : thin;
+    scrollbar-color  : rgba(255,255,255,0.15) transparent;
+}
+
+/* Green comments */
+.hljs-comment, .hljs-quote {
+    color      : #7dc46f !important;
+    font-style : italic;
+}
+
+/* ─── Copy Button ────────────────────────────── */
+.copy-code-btn {
+    position  : absolute;
+    top       : 6px;
+    right     : 8px;
+    background: rgba(255,255,255,0.08);
+    color     : rgba(255,255,255,0.6);
+    border    : 1px solid rgba(255,255,255,0.15);
+    padding   : 4px 10px;
+    border-radius: 5px;
+    font-size : 0.75rem;
+    cursor    : pointer;
+    font-family: var(--font-ui, sans-serif);
+    display   : flex;
+    align-items: center;
+    gap       : 5px;
+    transition: background 0.2s, color 0.2s;
+    z-index   : 10;
+}
+
+.copy-code-btn:hover { background: rgba(255,255,255,0.16); color: #fff; }
+.copy-code-btn.copied { color: #7dc46f; border-color: #7dc46f; }
+
+/* ─── Table ──────────────────────────────────── */
+.table-wrapper {
+    overflow-x  : auto;
+    margin      : 1.8em 0;
+    border      : 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.reader-content table {
+    width          : 100%;
+    border-collapse: collapse;
+    margin         : 0;
+    font-size      : 0.94em;
+}
+
+.reader-content th {
+    background    : rgba(128,128,128,0.08);
+    font-weight   : 600;
+    text-align    : left;
+    padding       : 10px 16px;
+    border-bottom : 2px solid var(--border-color);
+    white-space   : nowrap;
+    font-family   : var(--font-ui);
+}
+
+.reader-content td {
+    padding      : 9px 16px;
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: top;
+}
+
+.reader-content tr:last-child td { border-bottom: none; }
+.reader-content tr:nth-child(even) td { background: rgba(128,128,128,0.03); }
+.reader-content tr:hover td { background: rgba(128,128,128,0.07); transition: background 0.15s; }
+
+/* ─── Details / Summary ──────────────────────── */
+.reader-content details {
+    border       : 1px solid var(--border-color);
+    border-radius: 6px;
+    padding      : 0 1em;
+    margin       : 1.2em 0;
+}
+
+.reader-content details summary {
+    cursor     : pointer;
+    font-weight: 600;
+    padding    : 0.75em 0;
+    user-select: none;
+    outline    : none;
+}
+
+.reader-content details summary:hover { color: var(--accent-color); }
+
+.reader-content details[open] summary {
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 0.75em;
+}
+
+/* ─── Footnotes ──────────────────────────────── */
+.reader-content .footnotes {
+    border-top  : 1px solid var(--border-color);
+    margin-top  : 3em;
+    padding-top : 1.5em;
+    font-size   : 0.9em;
+    opacity     : 0.8;
+}
+
+/* ─── sup / sub ──────────────────────────────── */
+.reader-content sup a {
+    color          : var(--accent-color);
+    text-decoration: none;
+    font-size      : 0.75em;
+}
+
+/* ─── Definition Lists ───────────────────────── */
+.reader-content dl dt { font-weight: 600; margin-top: 1em; }
+.reader-content dl dd { margin-left: 1.5em; margin-bottom: 0.5em; opacity: 0.85; }
+
+/* ─── Callout Blockquotes (GitHub-style) ─────── */
+.reader-content .callout-note    { border-left-color: #1a7bde; background: rgba(26,123,222,0.07);  }
+.reader-content .callout-warning { border-left-color: #d29922; background: rgba(210,153,34,0.07);  }
+.reader-content .callout-tip     { border-left-color: #2ea043; background: rgba(46,160,67,0.07);   }
+.reader-content .callout-caution { border-left-color: #e05c1a; background: rgba(224,92,26,0.07);   }

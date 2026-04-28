@@ -1,0 +1,662 @@
+/* ═══════════════════════════════════════════════
+   THEMES.CSS — MD Studio v2.0
+   Global variables, themes, UI component styles
+   ═══════════════════════════════════════════════ */
+
+/* ─── Global Resets ──────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; width: 100%; overflow-x: hidden; scroll-behavior: smooth; }
+
+/* ─── CSS Variables & Sidebar Width ─────────────────────────────────────── */
+:root {
+    --sidebar-width: 300px;
+    --transition-speed: 0.3s;
+
+    /* ── 8 Font families ── */
+    --font-crimson     : 'Crimson Pro', Georgia, serif;
+    --font-lora        : 'Lora', Georgia, serif;
+    --font-merriweather: 'Merriweather', Georgia, serif;
+    --font-source-serif: 'Source Serif 4', Georgia, serif;
+    --font-garamond    : 'EB Garamond', Georgia, serif;
+    --font-nunito      : 'Nunito', system-ui, sans-serif;
+    --font-dm-sans     : 'DM Sans', system-ui, sans-serif;
+    --font-fira-sans   : 'Fira Sans', system-ui, sans-serif;
+    --font-mono        : 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+
+    /* Semantic aliases */
+    --font-body: var(--font-lora);
+    --font-ui  : var(--font-dm-sans);
+
+    /* Back-compat alias used by some device layouts */
+    --font-sans: var(--font-ui);
+}
+
+/* ─── Font Classes ───────────────────────────── */
+body.font-crimson      { --font-body: var(--font-crimson); }
+body.font-lora         { --font-body: var(--font-lora); }
+body.font-merriweather { --font-body: var(--font-merriweather); }
+body.font-source-serif { --font-body: var(--font-source-serif); }
+body.font-garamond     { --font-body: var(--font-garamond); }
+body.font-nunito       { --font-body: var(--font-nunito); }
+body.font-dm-sans      { --font-body: var(--font-dm-sans); }
+body.font-fira-sans    { --font-body: var(--font-fira-sans); }
+
+/* ─── Reading Width Classes ──────────────────── */
+body.width-narrow  { --reading-width: 580px;  }
+body.width-medium  { --reading-width: 720px;  }
+body.width-wide    { --reading-width: 960px;  }
+
+/* ─── Theme: Paperwhite ──────────────────────── */
+body.theme-paperwhite {
+    --bg-color    : #ffffff;
+    --text-color  : #1a1a1a;
+    --sidebar-bg  : #f5f7f9;
+    --border-color: #e0e4e8;
+    --accent-color: #0070f3;
+    --code-bg     : #1e1e2e;
+}
+
+/* ─── Theme: Sepia ───────────────────────────── */
+body.theme-sepia {
+    --bg-color    : #fbf0d9;
+    --text-color  : #5f4b32;
+    --sidebar-bg  : #f2e5c6;
+    --border-color: #e0d0b0;
+    --accent-color: #a65d37;
+    --code-bg     : #2d2418;
+}
+
+/* ─── Theme: Dark ────────────────────────────── */
+body.theme-dark {
+    --bg-color    : #121212;
+    --text-color  : #e0e0e0;
+    --sidebar-bg  : #1e1e1e;
+    --border-color: #333333;
+    --accent-color: #4da6ff;
+    --code-bg     : #0d1117;
+}
+
+/* ─── Base Body Styling ──────────────────────── */
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: var(--font-body);
+    transition: background-color var(--transition-speed), color var(--transition-speed);
+}
+
+.sidebar {
+    background-color: var(--sidebar-bg);
+    border-right: 1px solid var(--border-color);
+    font-family: var(--font-ui);
+    transition: background-color var(--transition-speed);
+}
+
+/* ─── Sidebar Header ─────────────────────────── */
+.sidebar-header {
+    padding: 24px 20px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.sidebar-header h2 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    font-family: var(--font-ui);
+    letter-spacing: -0.02em;
+}
+
+/* ─── Upload Button ──────────────────────────── */
+.file-upload-container {
+    padding: 0 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.upload-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 11px 16px;
+    background: var(--accent-color);
+    color: #fff;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: var(--font-ui);
+    font-weight: 600;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    transition: opacity 0.2s, transform 0.1s;
+    user-select: none;
+}
+
+.upload-btn:hover  { opacity: 0.9; }
+.upload-btn:active { transform: scale(0.98); }
+#md-upload { display: none; }
+
+/* ─── Settings Panel ─────────────────────────── */
+.settings-panel {
+    padding: 20px 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.settings-panel h3 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    opacity: 0.55;
+    margin-bottom: 10px;
+    margin-top: 18px;
+    font-family: var(--font-ui);
+}
+
+.settings-panel h3:first-child { margin-top: 0; }
+
+/* Theme buttons */
+.theme-options { display: flex; gap: 8px; margin-bottom: 4px; }
+
+.theme-btn {
+    flex: 1;
+    padding: 9px 4px;
+    border: 2px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 1rem;
+    transition: border-color 0.2s, transform 0.1s;
+}
+
+.theme-btn:hover  { border-color: var(--accent-color); }
+.theme-btn:active { transform: scale(0.95); }
+
+/* Font buttons — grid layout */
+.font-options {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.font-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 4px 6px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    background: transparent;
+    color: inherit;
+    transition: border-color 0.2s, background 0.2s, transform 0.1s;
+    line-height: 1.2;
+}
+
+.font-btn:hover  { border-color: var(--accent-color); background: rgba(128,128,128,0.08); }
+.font-btn:active { transform: scale(0.95); }
+
+.font-sample { font-size: 1.1rem; font-weight: 600; display: block; }
+.font-name   { font-size: 0.65rem; opacity: 0.6; margin-top: 2px; font-family: var(--font-ui) !important; display: block; }
+
+/* Size buttons */
+.size-options {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    margin-bottom: 4px;
+}
+
+.size-btn {
+    flex: 1;
+    padding: 8px;
+    background: transparent;
+    color: inherit;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: var(--font-ui);
+    font-weight: 600;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.size-btn:hover { border-color: var(--accent-color); background: rgba(128,128,128,0.08); }
+
+/* Width buttons */
+.width-options, .spacing-options {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.width-btn, .lh-btn {
+    flex: 1;
+    padding: 7px 4px;
+    background: transparent;
+    color: inherit;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: var(--font-ui);
+    font-size: 0.8rem;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.width-btn:hover, .lh-btn:hover { border-color: var(--accent-color); background: rgba(128,128,128,0.08); }
+
+/* Shortcuts hint */
+.shortcuts-hint {
+    margin-top: 16px;
+    padding: 10px 12px;
+    background: rgba(128,128,128,0.06);
+    border-radius: 6px;
+    font-family: var(--font-ui);
+    line-height: 1.6;
+}
+
+.shortcuts-hint small { font-size: 0.75rem; opacity: 0.7; }
+
+/* ─── TOC ────────────────────────────────────── */
+.toc-container {
+    padding: 20px 16px 32px;
+    font-family: var(--font-ui);
+}
+
+.toc-container h3 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    opacity: 0.55;
+    margin-bottom: 12px;
+}
+
+#toc-list { list-style: none; }
+#toc-list li { margin-bottom: 6px; line-height: 1.4; }
+
+#toc-list a {
+    color: var(--text-color);
+    text-decoration: none;
+    opacity: 0.7;
+    font-size: 0.9rem;
+    display: block;
+    padding: 2px 0;
+    transition: opacity 0.2s, color 0.2s;
+}
+
+#toc-list a:hover { opacity: 1; color: var(--accent-color); }
+
+/* Active TOC link (scroll-spy) */
+#toc-list a.toc-active {
+    color: var(--accent-color) !important;
+    opacity: 1 !important;
+    font-weight: 600;
+    border-left: 2px solid var(--accent-color);
+    padding-left: 8px;
+    margin-left: -10px;
+}
+
+.toc-level-2 { padding-left: 14px; }
+.toc-level-3 { padding-left: 28px; }
+.toc-level-3 a { font-size: 0.82rem !important; }
+
+/* ─── Reading Meta Bar ───────────────────────── */
+.reading-meta {
+    font-family: var(--font-ui);
+    font-size: 0.8rem;
+    opacity: 0.5;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* ─── Mobile Header ──────────────────────────── */
+.mobile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0 20px;
+    font-family: var(--font-ui);
+}
+
+.reading-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    opacity: 0.7;
+    max-width: 60%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* ─── Icon Button ────────────────────────────── */
+.icon-btn {
+    background: none;
+    border: none;
+    color: inherit;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: background 0.2s;
+    line-height: 1;
+}
+
+.icon-btn:hover { background: rgba(128,128,128,0.12); }
+
+/* ─── Progress Bar ───────────────────────────── */
+.progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: var(--accent-color);
+    width: 0%;
+    z-index: 1000;
+    transition: width 0.1s linear;
+    border-radius: 0 2px 2px 0;
+}
+
+/* ─── Drop Zone Overlay ──────────────────────── */
+.drop-zone-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s;
+    backdrop-filter: blur(4px);
+}
+
+.drop-zone-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.drop-zone-inner {
+    background: var(--sidebar-bg);
+    border: 2px dashed var(--accent-color);
+    border-radius: 16px;
+    padding: 48px 64px;
+    text-align: center;
+    color: var(--text-color);
+    font-family: var(--font-ui);
+}
+
+.drop-zone-inner svg { stroke: var(--accent-color); margin-bottom: 16px; }
+.drop-zone-inner p { font-size: 1.2rem; font-weight: 600; }
+
+/* ─── Error Toast ────────────────────────────── */
+.error-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #d32f2f;
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-family: var(--font-ui);
+    font-size: 0.9rem;
+    z-index: 3000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateX(-50%) translateY(16px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ─── Loading Spinner ────────────────────────── */
+.loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 40vh;
+    gap: 16px;
+    opacity: 0.6;
+    font-family: var(--font-ui);
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border-color);
+    border-top-color: var(--accent-color);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─── Image Error Placeholder ────────────────── */
+.img-error {
+    padding: 12px 16px;
+    background: rgba(128,128,128,0.08);
+    border: 1px dashed var(--border-color);
+    border-radius: 6px;
+    font-family: var(--font-ui);
+    font-size: 0.85rem;
+    opacity: 0.7;
+    margin: 1em 0;
+}
+
+/* ─── kbd Element ────────────────────────────── */
+kbd {
+    display: inline-block;
+    padding: 2px 7px;
+    font-family: var(--font-mono);
+    font-size: 0.82em;
+    background: var(--sidebar-bg);
+    border: 1px solid var(--border-color);
+    border-bottom: 3px solid var(--border-color);
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+}
+
+/* ─── Search Bar ─────────────────────────────── */
+.search-bar {
+    display: none;
+    /* Sticky: stays at top of scroll container while user scrolls down */
+    position: sticky;
+    top: 0;
+    z-index: 200;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: var(--sidebar-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    font-family: var(--font-ui);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.search-bar.active { display: flex; }
+
+.search-bar input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: var(--text-color);
+    font-size: 0.95rem;
+    font-family: var(--font-ui);
+    outline: none;
+}
+
+.search-icon { font-size: 1.1rem; opacity: 0.5; flex-shrink: 0; }
+
+.search-count {
+    font-size: 0.8rem;
+    opacity: 0.55;
+    white-space: nowrap;
+    min-width: 50px;
+    text-align: right;
+    font-family: var(--font-ui);
+}
+
+/* Search highlight marks */
+mark.search-highlight {
+    background: rgba(255, 220, 0, 0.45);
+    color: inherit;
+    border-radius: 2px;
+    padding: 0 1px;
+}
+
+mark.search-highlight.active-match {
+    background: rgba(255, 140, 0, 0.65);
+    outline: 2px solid rgba(255, 140, 0, 0.8);
+    border-radius: 2px;
+}
+
+/* ─── Mermaid Diagram Container ──────────────── */
+.mermaid-diagram {
+    margin: 1.5em 0;
+    text-align: center;
+    overflow-x: auto;
+}
+
+.mermaid-placeholder {
+    background: var(--sidebar-bg);
+    border: 1px dashed var(--border-color);
+    border-radius: 8px;
+    padding: 2em;
+    text-align: center;
+    font-family: var(--font-ui);
+    opacity: 0.7;
+}
+
+/* ─── Quick Wins CSS ─────────────────────────── */
+
+/* Smooth image loading */
+.reader-content img { transition: opacity 0.3s; }
+
+/* Better text selection color */
+::selection { background: rgba(0, 112, 243, 0.2); color: inherit; }
+
+/* Better focus styles (accessibility) */
+a:focus-visible, button:focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+    border-radius: 3px;
+}
+
+/* Better custom scrollbar */
+.main-content::-webkit-scrollbar { width: 6px; }
+.main-content::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+.main-content::-webkit-scrollbar-track { background: transparent; }
+
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+
+/* No orphan headings */
+.reader-content h1,
+.reader-content h2,
+.reader-content h3,
+.reader-content h4 { page-break-after: avoid; break-after: avoid; }
+
+/* ─── Recent Files List ──────────────────────── */
+#recent-files-list { list-style: none; }
+
+.history-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border-color);
+    font-family: var(--font-ui);
+    font-size: 0.85rem;
+    cursor: default;
+}
+
+.history-item:last-child { border-bottom: none; }
+
+.history-icon { flex-shrink: 0; font-size: 0.9rem; }
+
+.history-name {
+    flex: 1;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    opacity: 0.85;
+}
+
+.history-time {
+    font-size: 0.72rem;
+    opacity: 0.45;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+/* ─── Custom CSS Textarea ────────────────────── */
+.custom-css-input {
+    width: 100%;
+    min-height: 100px;
+    padding: 10px;
+    background: var(--bg-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    line-height: 1.5;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.custom-css-input:focus { border-color: var(--accent-color); }
+.custom-css-input::placeholder { opacity: 0.4; }
+
+/* ─── Print Styles ───────────────────────────── */
+@media print {
+    .sidebar,
+    .bottom-nav,
+    .progress-bar,
+    .search-bar,
+    .reading-meta,
+    .mobile-header,
+    .drop-zone-overlay { display: none !important; }
+
+    .main-content {
+        height: auto !important;
+        overflow: visible !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .reader-content {
+        max-width: 100% !important;
+        font-size: 12pt !important;
+    }
+
+    .reader-content pre {
+        white-space: pre-wrap;
+        word-break: break-word;
+        border: 1px solid #ccc !important;
+        background: #f5f5f5 !important;
+        color: #000 !important;
+    }
+
+    .reader-content pre code { color: #000 !important; }
+
+    .copy-code-btn { display: none !important; }
+
+    a[href]::after { content: " (" attr(href) ")"; font-size: 0.8em; opacity: 0.6; }
+}
+
