@@ -1,211 +1,417 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MD Studio &amp; ReadTheDocs Experience</title>
-    <meta name="description" content="A premium Markdown reader with Kindle-like reading experience.">
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#0070f3">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="MD Studio">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MD Studio — Read Markdown like a book.</title>
+<meta name="description" content="A premium, distraction-free Markdown reader. Math, diagrams, code and GitHub import — rendered beautifully, on every screen.">
+<meta name="theme-color" content="#F6F5F1">
+<link rel="icon" type="image/svg+xml" href="logo/favicon-black.svg">
 
-    <!-- Google Fonts — 8 fonts + Mono -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=Lora:ital,wght@0,400;0,700;1,400&family=Merriweather:ital,wght@0,400;0,700;1,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=Nunito:wght@300;400;600&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;1,9..40,400&family=Fira+Sans:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 
-    <!-- Marked.js v12 (version-pinned) -->
-    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css">
+<link rel="stylesheet" href="css/landing.css">
 
-    <!-- DOMPurify (Security) -->
-    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.0/dist/purify.min.js"></script>
-
-    <!-- Highlight.js -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-
-    <!-- KaTeX — Math Rendering -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js" defer></script>
-
-    <!-- Mermaid — Diagram Rendering -->
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js" defer></script>
-
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
-    <!-- Global CSS -->
-    <link rel="stylesheet" href="css/typography.css">
-    <link rel="stylesheet" href="css/themes.css">
-
-    <!-- Device-Specific CSS -->
-    <link rel="stylesheet" href="ui/laptop/layout.css" media="screen and (min-width: 1025px)">
-    <link rel="stylesheet" href="ui/tablet/layout.css" media="screen and (min-width: 768px) and (max-width: 1024px)">
-    <link rel="stylesheet" href="ui/mobile/layout.css" media="screen and (max-width: 767px)">
+<style>
+  section[id], div[id="top"] { scroll-margin-top: 96px; }
+  .code-demo pre code.hljs { background: transparent; padding: 0; }
+  .diagram-demo .mermaid { width: 100%; }
+</style>
 </head>
-<body class="theme-paperwhite font-lora width-medium">
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="top" aria-hidden="true"></div>
 
-    <!-- Drag & Drop Overlay -->
-    <div id="drop-zone-overlay" class="drop-zone-overlay">
-        <div class="drop-zone-inner">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            <p>Drop your .md file here</p>
+<!-- ═══ Nav ═══ -->
+<header class="nav" id="nav">
+  <div class="nav__inner">
+    <a class="brand" href="#top" aria-label="MD Studio home">
+      <svg viewBox="0 0 256 256" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="34" stroke-linecap="butt"><path d="M44 96H71M121 96H212"/><path d="M44 160H135M185 160H212"/><path d="M96 44V135M96 185V212"/><path d="M160 44V71M160 121V212"/></g></svg>
+      MD Studio
+    </a>
+    <nav class="nav__links" aria-label="Primary">
+      <a href="#features">Features</a>
+      <a href="#themes">Themes</a>
+      <a href="#import">Import</a>
+    </nav>
+    <div class="nav__cta">
+      <a class="btn btn--primary" href="app.html">Open MD Studio
+        <span class="btn__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg></span>
+      </a>
+    </div>
+    <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<div class="menu" id="menu" aria-label="Menu">
+  <a href="#features">Features</a>
+  <a href="#themes">Themes</a>
+  <a href="#import">Import</a>
+  <a href="app.html">Open MD Studio</a>
+  <a class="btn btn--primary menu__cta" href="app.html">Open MD Studio
+    <span class="btn__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg></span>
+  </a>
+</div>
+
+<main>
+  <!-- ═══ Hero ═══ -->
+  <section class="hero">
+    <div class="hero__glow" aria-hidden="true"></div>
+    <div class="wrap hero__grid">
+      <div class="hero__copy">
+        <span class="eyebrow reveal"><span class="dot"></span>Markdown Reader</span>
+        <h1 class="reveal" style="--i:1">Read Markdown like a well-set <em>book</em>.</h1>
+        <p class="lead reveal" style="--i:2">A distraction-free reader for your <code class="mono">.md</code> files — math, diagrams, code and GitHub import, all rendered beautifully.</p>
+        <div class="hero__cta reveal" style="--i:3">
+          <a class="btn btn--primary" href="app.html">Open MD Studio
+            <span class="btn__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg></span>
+          </a>
+          <a class="btn btn--ghost" href="#import">Import from GitHub
+            <span class="btn__ico"><i class="bi bi-github"></i></span>
+          </a>
         </div>
+      </div>
+
+      <div class="hero__media reveal" style="--i:2">
+        <div class="frame">
+          <div class="frame__in">
+            <div class="frame__bar" aria-hidden="true">
+              <span class="frame__dot frame__dot--r"></span>
+              <span class="frame__dot frame__dot--y"></span>
+              <span class="frame__dot frame__dot--g"></span>
+              <span class="frame__url">mdstudio.local/demo.md</span>
+            </div>
+            <img src="assets/preview-light.png" width="1100" height="720" alt="MD Studio rendering a Markdown document with prose, code and math" fetchpriority="high">
+          </div>
+        </div>
+      </div>
     </div>
+  </section>
 
-    <div class="app-container">
-        <!-- Sidebar -->
-        <aside id="sidebar" class="sidebar">
-            <div class="sidebar-header">
-                <h2>MD Studio</h2>
-                <button id="close-sidebar" class="icon-btn mobile-tablet-only" aria-label="Close sidebar"><i class="bi bi-x-lg"></i></button>
-            </div>
-
-            <div class="file-upload-container">
-                <label for="md-upload" class="upload-btn">
-                    <i class="bi bi-file-earmark-arrow-up"></i>
-                    Upload .md File
-                </label>
-                <input type="file" id="md-upload" accept=".md,.markdown,.txt" />
-            </div>
-
-            <div class="settings-panel">
-                <h3>Theme</h3>
-                <div class="theme-options">
-                    <button data-theme="theme-paperwhite" class="theme-btn" style="background:#fff;color:#000;" title="Paperwhite">Aa</button>
-                    <button data-theme="theme-sepia"      class="theme-btn" style="background:#f4ecd8;color:#5b4636;" title="Sepia">Aa</button>
-                    <button data-theme="theme-dark"       class="theme-btn" style="background:#121212;color:#e0e0e0;" title="Dark">Aa</button>
-                </div>
-
-                <h3>Font</h3>
-                <div class="font-options">
-                    <button data-font="font-crimson"      class="font-btn" style="font-family:'Crimson Pro',serif"><span class="font-sample">Aa</span><span class="font-name">Crimson</span></button>
-                    <button data-font="font-lora"         class="font-btn" style="font-family:'Lora',serif"><span class="font-sample">Aa</span><span class="font-name">Lora</span></button>
-                    <button data-font="font-merriweather" class="font-btn" style="font-family:'Merriweather',serif"><span class="font-sample">Aa</span><span class="font-name">Merri</span></button>
-                    <button data-font="font-source-serif" class="font-btn" style="font-family:'Source Serif 4',serif"><span class="font-sample">Aa</span><span class="font-name">Source</span></button>
-                    <button data-font="font-garamond"     class="font-btn" style="font-family:'EB Garamond',serif"><span class="font-sample">Aa</span><span class="font-name">Garamond</span></button>
-                    <button data-font="font-nunito"       class="font-btn" style="font-family:'Nunito',sans-serif"><span class="font-sample">Aa</span><span class="font-name">Nunito</span></button>
-                    <button data-font="font-dm-sans"      class="font-btn" style="font-family:'DM Sans',sans-serif"><span class="font-sample">Aa</span><span class="font-name">DM Sans</span></button>
-                    <button data-font="font-fira-sans"    class="font-btn" style="font-family:'Fira Sans',sans-serif"><span class="font-sample">Aa</span><span class="font-name">Fira</span></button>
-                </div>
-
-                <div class="size-options">
-                    <button id="btn-zoom-out" class="size-btn" aria-label="Decrease font size">A−</button>
-                    <button id="btn-zoom-in"  class="size-btn" aria-label="Increase font size">A+</button>
-                </div>
-
-                <h3>Reading Width</h3>
-                <div class="width-options">
-                    <button data-width="width-narrow" class="width-btn">Narrow</button>
-                    <button data-width="width-medium" class="width-btn">Medium</button>
-                    <button data-width="width-wide"   class="width-btn">Wide</button>
-                </div>
-
-                <h3>Line Spacing</h3>
-                <div class="spacing-options">
-                    <button data-lh="1.5" class="lh-btn">Compact</button>
-                    <button data-lh="1.8" class="lh-btn">Normal</button>
-                    <button data-lh="2.2" class="lh-btn">Relaxed</button>
-                </div>
-
-                <!-- Print / Export -->
-                <h3>Export</h3>
-                <div class="width-options">
-                    <button id="btn-print" class="width-btn" title="Print or Save as PDF"><i class="bi bi-printer"></i> Print / PDF</button>
-                </div>
-
-                <!-- Custom CSS -->
-                <h3>Custom CSS</h3>
-                <textarea id="custom-css-input" class="custom-css-input" placeholder="/* Your custom styles here */
-ex: .reader-content { font-size: 20px; }"></textarea>
-                <div class="width-options" style="margin-top:6px;">
-                    <button id="btn-apply-css" class="width-btn">Apply</button>
-                    <button id="btn-clear-css" class="width-btn">Clear</button>
-                </div>
-
-                <div class="shortcuts-hint">
-                    <small>Shortcuts: <kbd>T</kbd> theme &middot; <kbd>[</kbd><kbd>]</kbd> size &middot; <kbd>F</kbd> fullscreen &middot; <kbd>/</kbd> search</small>
-                </div>
-            </div>
-
-            <!-- Recent Files -->
-            <nav id="recent-files-container" class="toc-container" aria-label="Recent Files">
-                <h3>Recent Files</h3>
-                <ul id="recent-files-list">
-                    <li><span style="opacity:0.5;font-style:italic;font-size:0.85rem;">No recent files</span></li>
-                </ul>
-            </nav>
-
-            <nav id="toc-container" class="toc-container" aria-label="Table of Contents">
-                <h3>Table of Contents</h3>
-                <ul id="toc-list">
-                    <li><a href="#" style="opacity:0.5;font-style:italic;">Upload a file to see TOC</a></li>
-                </ul>
-            </nav>
-        </aside>
-
-        <!-- Main Reading Pane -->
-        <main id="main-content" class="main-content">
-            <header class="mobile-header mobile-tablet-only">
-                <button id="open-sidebar" class="icon-btn" aria-label="Open sidebar"><i class="bi bi-list"></i></button>
-                <span class="reading-title">MD Studio</span>
-                <div style="width:32px;"></div>
-            </header>
-
-            <!-- Search Bar -->
-            <div id="search-bar" class="search-bar" role="search" aria-hidden="true">
-                <span class="search-icon"><i class="bi bi-search"></i></span>
-                <input type="text" id="search-input" placeholder="Search in document... (Esc to close)" autocomplete="off" />
-                <span id="search-count" class="search-count"></span>
-                <button id="btn-search-prev" class="icon-btn" title="Previous match"><i class="bi bi-chevron-up"></i></button>
-                <button id="btn-search-next" class="icon-btn" title="Next match"><i class="bi bi-chevron-down"></i></button>
-                <button id="btn-search-close" class="icon-btn" title="Close search"><i class="bi bi-x-lg"></i></button>
-            </div>
-
-            <div class="reading-meta">
-                <span id="reading-stats">Upload a .md file to begin reading</span>
-            </div>
-
-            <div id="reader" class="reader-content">
-                <h1>Welcome to MD Studio</h1>
-                <p>A premium, distraction-free Markdown reading environment combining <strong>Read the Docs</strong> navigation with an <strong>Amazon Kindle</strong>-like reading experience.</p>
-                <p>Drag &amp; drop a <code>.md</code> file anywhere, or use the <strong>Upload</strong> button in the sidebar.</p>
-                <hr>
-                <h2>Features</h2>
-                <ul>
-                    <li>Responsive layouts for Laptop, Tablet &amp; Mobile.</li>
-                    <li>8 premium reading fonts (Crimson Pro, Lora, Merriweather &amp; more).</li>
-                    <li>Themes: Paperwhite, Sepia, Dark — auto-detects system preference.</li>
-                    <li>Auto-generated TOC with active scroll-spy.</li>
-                    <li>Syntax-highlighted code blocks with copy button &amp; language badge.</li>
-                    <li>GitHub-style task lists, tables, blockquotes &amp; collapsible sections.</li>
-                    <li>KaTeX math rendering: <code>$E=mc^2$</code></li>
-                    <li>Mermaid diagram support.</li>
-                    <li>In-document search with highlight &amp; navigation.</li>
-                    <li>Print / Export to PDF.</li>
-                    <li>Adjustable font size, reading width &amp; line spacing.</li>
-                    <li>Keyboard shortcuts: <kbd>T</kbd> theme &middot; <kbd>[</kbd><kbd>]</kbd> size &middot; <kbd>F</kbd> fullscreen &middot; <kbd>/</kbd> search</li>
-                </ul>
-            </div>
-
-            <div id="progress-bar" class="progress-bar"></div>
-        </main>
-
-        <!-- Mobile Bottom Nav -->
-        <nav class="bottom-nav mobile-only" aria-label="Mobile navigation">
-            <button id="nav-toc"      class="bottom-nav-btn"><i class="bi bi-journal-text"></i><span>Contents</span></button>
-            <button id="nav-settings" class="bottom-nav-btn"><i class="bi bi-gear"></i><span>Settings</span></button>
-        </nav>
+  <!-- ═══ Powered by ═══ -->
+  <div class="wrap powered reveal">
+    <p class="powered__cap">Rendered with</p>
+    <div class="powered__row">
+      <a href="https://github.com/" target="_blank" rel="noopener" aria-label="GitHub"><img src="https://cdn.simpleicons.org/github/8B877C" alt="GitHub" height="22"></a>
+      <a href="https://commonmark.org/" target="_blank" rel="noopener" aria-label="Markdown"><img src="https://cdn.simpleicons.org/markdown/8B877C" alt="Markdown" height="22"></a>
+      <a href="https://katex.org/" target="_blank" rel="noopener" aria-label="KaTeX"><img src="assets/katex-logo.svg" alt="KaTeX" height="20" style="width:auto"></a>
+      <a href="https://mermaid.js.org/" target="_blank" rel="noopener" aria-label="Mermaid"><img src="https://cdn.simpleicons.org/mermaid/8B877C" alt="Mermaid" height="22"></a>
+      <a href="https://www.python.org/" target="_blank" rel="noopener" aria-label="Python"><img src="https://cdn.simpleicons.org/python/8B877C" alt="Python" height="22"></a>
     </div>
+  </div>
 
-    <script src="js/markdownParser.js"></script>
-    <script src="js/tocGenerator.js"></script>
-    <script src="js/app.js"></script>
-    <script src="ui/laptop/laptopUI.js"></script>
-    <script src="ui/tablet/tabletUI.js"></script>
-    <script src="ui/mobile/mobileUI.js"></script>
+  <!-- ═══ Features (bento) ═══ -->
+  <section class="section" id="features">
+    <div class="wrap">
+      <div class="head reveal">
+        <h2 class="h2">Everything a Markdown file deserves.</h2>
+        <p class="lead">One page for prose, code, math and diagrams — rendered exactly as the author intended, never as raw text.</p>
+      </div>
+
+      <div class="bento">
+        <!-- code -->
+        <div class="cell cell--dark cell--code cell--demo reveal">
+          <div>
+            <div class="cell__ico"><i class="bi bi-braces"></i></div>
+            <h3>Code that reads like code</h3>
+            <p>Language-aware highlighting, a one-tap copy button and a language badge on every block.</p>
+          </div>
+          <div class="code-demo">
+<pre><code class="language-python">def read(path):
+    with open(path, "r", encoding="utf-8") as f:
+        return f.read()
+</code></pre>
+          </div>
+        </div>
+
+        <!-- math -->
+        <div class="cell cell--math cell--demo reveal" style="--i:1">
+          <div>
+            <div class="cell__ico"><i class="bi bi-infinity"></i></div>
+            <h3>Math, properly typeset</h3>
+            <p>KaTeX renders inline and display LaTeX up to specification.</p>
+          </div>
+          <div class="math-demo" id="math-demo">$$\mathcal{L} = -\sum_{i} y_i \log \hat{y}_i$$</div>
+        </div>
+
+        <!-- diagram -->
+        <div class="cell cell--diag cell--demo reveal" style="--i:1">
+          <div>
+            <div class="cell__ico"><i class="bi bi-diagram-3"></i></div>
+            <h3>Diagrams from text</h3>
+            <p>A few lines become flowcharts, sequences and Gantt charts.</p>
+          </div>
+          <div class="diagram-demo">
+<div class="mermaid">
+graph LR
+  A[Upload .md] --> B{Render}
+  B --> C[Read]
+</div>
+          </div>
+        </div>
+
+        <!-- github -->
+        <div class="cell cell--gh cell--tint reveal" style="--i:2">
+          <div class="cell__ico"><i class="bi bi-github"></i></div>
+          <h3>Pull straight from GitHub</h3>
+          <p>Paste a public repository URL and browse its tree to open any Markdown file — relative links and images resolved for you.</p>
+        </div>
+
+        <!-- toc -->
+        <div class="cell cell--toc reveal" style="--i:1">
+          <div class="cell__ico"><i class="bi bi-list-nested"></i></div>
+          <h3>Contents that follow</h3>
+          <p>An auto-generated table of contents with scroll-spy keeps your place in long docs.</p>
+        </div>
+
+        <!-- search -->
+        <div class="cell cell--search reveal" style="--i:2">
+          <div class="cell__ico"><i class="bi bi-search"></i></div>
+          <h3>Search the whole document</h3>
+          <p>A sticky search bar highlights every match and jumps between them in a keystroke.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Themes ═══ -->
+  <section class="section" id="themes" style="background:var(--bg-2);">
+    <div class="wrap">
+      <div class="head reveal">
+        <span class="eyebrow"><span class="dot"></span>Themes</span>
+        <h2 class="h2">Three ways to read.</h2>
+        <p class="lead">Paperwhite for daylight, Sepia for long sessions, Dark for the night. Your choice is remembered.</p>
+      </div>
+
+      <div class="themes">
+        <figure class="theme-card reveal" style="margin:0">
+          <div class="frame"><div class="frame__in"><img src="assets/preview-light.png" width="760" height="520" alt="Paperwhite theme — white background, dark text" loading="lazy"></div></div>
+          <figcaption><span class="tname">Paperwhite</span><span class="tswatch" style="background:#ffffff"></span></figcaption>
+        </figure>
+        <figure class="theme-card reveal" style="--i:1;margin:0">
+          <div class="frame"><div class="frame__in"><img src="assets/preview-sepia.png" width="760" height="520" alt="Sepia theme — warm cream background" loading="lazy"></div></div>
+          <figcaption><span class="tname">Sepia</span><span class="tswatch" style="background:#fbf0d9"></span></figcaption>
+        </figure>
+        <figure class="theme-card reveal" style="--i:2;margin:0">
+          <div class="frame"><div class="frame__in"><img src="assets/preview-dark.png" width="760" height="520" alt="Dark theme — near-black background" loading="lazy"></div></div>
+          <figcaption><span class="tname">Dark</span><span class="tswatch" style="background:#121212"></span></figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Responsive ═══ -->
+  <section class="section resp">
+    <div class="wrap">
+      <div class="head reveal">
+        <h2 class="h2">Made for the screen in your hand.</h2>
+        <p class="lead">Distinct layouts for laptop, tablet and phone — not a squeezed desktop.</p>
+      </div>
+      <div class="resp__stage reveal" style="--i:1">
+        <div class="resp__laptop">
+          <div class="frame"><div class="frame__in"><img src="assets/preview-light.png" width="1100" height="720" alt="MD Studio on a laptop" loading="lazy"></div></div>
+        </div>
+        <div class="resp__phone"><img src="assets/mobile-preview.png" width="390" height="760" alt="MD Studio on a phone" loading="lazy"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Import ═══ -->
+  <section class="section" id="import" style="background:var(--bg-2);">
+    <div class="wrap split split--rev">
+      <div class="split__media reveal">
+        <div class="frame" style="padding:12px">
+          <div class="panel">
+            <p class="panel__label">Repository</p>
+            <div class="gh-input">
+              <span class="in">github.com/ocean-master0/MD-Studio</span>
+              <button class="go" type="button">Load</button>
+            </div>
+            <div class="panel__row" style="margin-top:16px">
+              <span class="chip chip--on">README.md</span>
+              <span class="chip">docs/intro.md</span>
+              <span class="chip">guide/setup.md</span>
+            </div>
+            <p class="panel__label" style="margin-top:22px">Recent files</p>
+            <div class="panel__row">
+              <span class="chip">notes.md</span>
+              <span class="chip">spec.md</span>
+              <span class="chip">changelog.md</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="split__copy reveal" style="--i:1">
+        <h2 class="h2">Bring your own Markdown.</h2>
+        <p class="lead" style="margin-top:16px">Open a file any way you like. Everything is read in your browser — nothing is ever uploaded.</p>
+        <ul class="import-list">
+          <li><span class="tick"><i class="bi bi-check-lg"></i></span><div><strong>Drag &amp; drop</strong><span>Drop a .md file anywhere on the page.</span></div></li>
+          <li><span class="tick"><i class="bi bi-check-lg"></i></span><div><strong>Upload</strong><span>Pick a .md, .markdown or .txt file from the sidebar.</span></div></li>
+          <li><span class="tick"><i class="bi bi-check-lg"></i></span><div><strong>GitHub URL</strong><span>Import every Markdown file from a public repository.</span></div></li>
+          <li><span class="tick"><i class="bi bi-check-lg"></i></span><div><strong>Recent files</strong><span>Pick up exactly where you left off.</span></div></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Controls ═══ -->
+  <section class="section" id="controls">
+    <div class="wrap">
+      <div class="head reveal">
+        <h2 class="h2">Tune it to your eyes.</h2>
+        <p class="lead">Eight reading fonts, adjustable size, width and line spacing — with a handful of keyboard shortcuts.</p>
+      </div>
+
+      <div class="fonts-demo reveal" style="--i:1">
+        <div class="font-tabs">
+          <button class="font-tab on" data-name="Lora"            onclick="setFont(this,'Lora')">Lora</button>
+          <button class="font-tab" data-name="Crimson Pro"        onclick="setFont(this,&quot;Crimson Pro&quot;)">Crimson</button>
+          <button class="font-tab" data-name="Merriweather"       onclick="setFont(this,'Merriweather')">Merriweather</button>
+          <button class="font-tab" data-name="Source Serif 4"     onclick="setFont(this,&quot;Source Serif 4&quot;)">Source Serif</button>
+          <button class="font-tab" data-name="EB Garamond"        onclick="setFont(this,&quot;EB Garamond&quot;)">Garamond</button>
+          <button class="font-tab" data-name="Nunito"             onclick="setFont(this,'Nunito')">Nunito</button>
+          <button class="font-tab" data-name="DM Sans"            onclick="setFont(this,&quot;DM Sans&quot;)">DM Sans</button>
+          <button class="font-tab" data-name="Fira Sans"          onclick="setFont(this,'Fira Sans')">Fira Sans</button>
+        </div>
+        <div class="font-preview">
+          <p id="font-sample">The quick brown fox jumps over the lazy dog — and then reads it back, slowly, without a single distraction.</p>
+          <small>Font: <span id="font-name">Lora</span> · 18px · Medium width · Relaxed spacing</small>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Closing CTA ═══ -->
+  <section class="wrap">
+    <div class="cta reveal">
+      <div class="cta__glow" aria-hidden="true"></div>
+      <h2 class="h2">Open MD Studio and drop a file.</h2>
+      <p>Free, open source and entirely in your browser — no accounts, no uploads.</p>
+      <a class="btn btn--primary" href="app.html">Open MD Studio
+        <span class="btn__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg></span>
+      </a>
+    </div>
+  </section>
+
+  <!-- ═══ Footer ═══ -->
+  <footer class="footer">
+    <div class="wrap footer__grid">
+      <div class="footer__brand">
+        <a class="brand" href="#top">
+          <svg viewBox="0 0 256 256" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="34" stroke-linecap="butt"><path d="M44 96H71M121 96H212"/><path d="M44 160H135M185 160H212"/><path d="M96 44V135M96 185V212"/><path d="M160 44V71M160 121V212"/></g></svg>
+          MD Studio
+        </a>
+        <p>A premium, distraction-free Markdown reading experience — Read the Docs navigation with Kindle-like comfort.</p>
+      </div>
+      <div class="footer__cols">
+        <div>
+          <h4>Product</h4>
+          <ul>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#themes">Themes</a></li>
+            <li><a href="#import">Import</a></li>
+            <li><a href="#controls">Reading controls</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Resources</h4>
+          <ul>
+            <li><a href="https://github.com/ocean-master0/MD-Studio" target="_blank" rel="noopener">GitHub</a></li>
+            <li><a href="README.md" target="_blank" rel="noopener">README</a></li>
+            <li><a href="manifest.json" target="_blank" rel="noopener">PWA manifest</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Built with</h4>
+          <ul>
+            <li><a href="https://marked.js.org/" target="_blank" rel="noopener">marked.js</a></li>
+            <li><a href="https://katex.org/" target="_blank" rel="noopener">KaTeX</a></li>
+            <li><a href="https://mermaid.js.org/" target="_blank" rel="noopener">Mermaid</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="wrap footer__base">
+      <span>© <span id="year">2026</span> MD Studio · MIT licensed.</span>
+      <span class="mono">Made for people who read on screens.</span>
+    </div>
+  </footer>
+</main>
+
+<!-- ═══ Demo libraries ═══ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+
+<script>
+(function () {
+  var nav = document.getElementById('nav');
+  var sentinel = document.getElementById('top');
+  if ('IntersectionObserver' in window && sentinel) {
+    new IntersectionObserver(function (e) {
+      nav.classList.toggle('scrolled', !e[0].isIntersecting);
+    }, { rootMargin: '-64px 0px 0px 0px' }).observe(sentinel);
+  }
+
+  var burger = document.getElementById('burger');
+  if (burger) {
+    burger.addEventListener('click', function () {
+      var open = document.body.classList.toggle('menu-open');
+      burger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+  }
+  document.querySelectorAll('.menu a').forEach(function (a) {
+    a.addEventListener('click', function () {
+      document.body.classList.remove('menu-open');
+      if (burger) burger.setAttribute('aria-expanded', 'false');
+    });
+  });
+
+  var revs = document.querySelectorAll('.reveal');
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
+      });
+    }, { threshold: 0.14, rootMargin: '0px 0px -8% 0px' });
+    revs.forEach(function (r) { io.observe(r); });
+  } else {
+    revs.forEach(function (r) { r.classList.add('in'); });
+  }
+
+  window.setFont = function (btn, family) {
+    document.querySelectorAll('.font-tab').forEach(function (b) { b.classList.remove('on'); });
+    btn.classList.add('on');
+    var p = document.getElementById('font-sample');
+    if (p) p.style.fontFamily = '"' + family + '", Georgia, serif';
+    var n = document.getElementById('font-name');
+    if (n) n.textContent = btn.dataset.name;
+  };
+
+  var y = document.getElementById('year');
+  if (y) y.textContent = String(new Date().getFullYear());
+
+  if (window.hljs) { try { hljs.highlightAll(); } catch (e) {} }
+  if (window.renderMathInElement) {
+    try {
+      renderMathInElement(document.getElementById('math-demo'), {
+        delimiters: [{ left: '$$', right: '$$', display: true }],
+        throwOnError: false
+      });
+    } catch (e) {}
+  }
+  if (window.mermaid) {
+    try { mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'strict' }); } catch (e) {}
+  }
+})();
+</script>
 </body>
 </html>

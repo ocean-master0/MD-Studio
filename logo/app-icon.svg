@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <title>MD Studio</title>
+  <rect width="256" height="256" rx="57" fill="#0070f3"/>
+  <g fill="none" stroke="#ffffff" stroke-width="30">
+    <path d="M56 104.5H200"/>
+    <path d="M56 151.5H200"/>
+    <path d="M104.5 56V200"/>
+    <path d="M151.5 56V200"/>
+  </g>
+</svg>

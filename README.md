@@ -68,17 +68,21 @@ npx http-server . -p 8000 -c-1
 
 ```
 md-studio/
-├── index.html              # Main app shell
+├── index.html              # Landing page (entry point)
+├── app.html                # The Markdown reader app shell
 ├── app.py                  # Local dev server (Python)
 ├── render.yaml             # Render.com deployment config
 ├── manifest.json           # PWA manifest
 ├── sw.js                   # Service Worker (offline support)
 ├── css/
 │   ├── themes.css          # All themes, UI components, variables
-│   └── typography.css      # Reader content typography
+│   ├── typography.css      # Reader content typography
+│   └── landing.css         # Landing page styles
+├── assets/                 # Landing page imagery (app screenshots)
 ├── js/
 │   ├── markdownParser.js   # marked.js v12 renderer + KaTeX + Mermaid
 │   ├── tocGenerator.js     # TOC generation + scroll-spy
+│   ├── githubLoader.js     # Public GitHub repo .md import
 │   └── app.js              # App logic, preferences, search, shortcuts
 └── ui/
     ├── laptop/             # Laptop CSS + JS layout

@@ -26,8 +26,6 @@ class MDStudioHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
         self.send_header("Pragma", "no-cache")
         self.send_header("Expires", "0")
-        # Allow cross-origin for fonts/CDN resources in the app
-        self.send_header("Access-Control-Allow-Origin", "*")
         super().end_headers()
 
     def guess_type(self, path):
@@ -62,16 +60,23 @@ class MDStudioHandler(http.server.SimpleHTTPRequestHandler):
             pass
 
 
-# --- Port Finder --------------------------------------------------------------
-def find_free_port(start_port: int, max_tries: int = MAX_PORT_TRIES) -> int:
-    """Find an available port starting from start_port."""
+# --- Port Binding -------------------------------------------------------------
+def bind_local_port(start_port: int, max_tries: int = MAX_PORT_TRIES):
+    """Bind one socket to the first free port.
+
+    Returns the already-bound (and later listened-on) socket. The socket is
+    handed directly to the server, so there is no check-then-use window where
+    another process could steal the port (BUG-020 TOCTOU).
+    """
     for port in range(start_port, start_port + max_tries):
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            try:
-                s.bind(("", port))
-                return port
-            except OSError:
-                continue
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            s.bind(("", port))
+            return s, port
+        except OSError:
+            s.close()
+            continue
     raise OSError(
         f"Could not find a free port in range {start_port}-{start_port + max_tries - 1}.\n"
         "Please close other applications using these ports and try again."
@@ -79,41 +84,60 @@ def find_free_port(start_port: int, max_tries: int = MAX_PORT_TRIES) -> int:
 
 
 # ─── Reusable TCP Server ───────────────────────────────────────────────────────
-class ReusableTCPServer(socketserver.TCPServer):
-    """TCPServer with SO_REUSEADDR so restarts don't fail with 'Address in use'."""
+class ReusableTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
+    """Threaded TCPServer: SO_REUSEADDR + each request handled on its own thread.
+
+    Without ThreadingMixIn, ONE stalled/aborted connection (browser cancel,
+    slow asset) freezes the single-threaded accept loop and every subsequent
+    request — including file uploads — hangs indefinitely.
+    """
     allow_reuse_address = True
+    daemon_threads = True
 
 
 # ─── Server Start ─────────────────────────────────────────────────────────────
-def start_server(port: int):
-    with ReusableTCPServer(("", port), MDStudioHandler) as httpd:
-        url = f"http://localhost:{port}"
-        print(f"\n  MD Studio is running!")
-        print(f"  Open in browser --> {url}")
-        print(f"  Serving from:    {os.getcwd()}")
-        print(f"\n  Press Ctrl+C to stop the server.\n")
+def start_server(listening_socket: socket.socket):
+    """Serve forever on a pre-bound socket (no TOCTOU race)."""
+    actual_port = listening_socket.getsockname()[1]
 
-        # Open browser after a short delay (server needs to be ready)
-        threading.Timer(0.8, lambda: webbrowser.open(url)).start()
+    # Create the server WITHOUT binding (bind_and_activate=False), then swap in
+    # our already-bound socket. This is the TOCTOU-free handoff.
+    httpd = ReusableTCPServer(("", actual_port), MDStudioHandler, bind_and_activate=False)
+    httpd.socket.close()                 # discard the placeholder socket
+    httpd.socket = listening_socket      # reuse the bound socket
+    listening_socket.listen(httpd.request_queue_size)
+    host, port = listening_socket.getsockname()[:2]
+    httpd.server_name = socket.getfqdn(host)
+    httpd.server_port = port
 
-        try:
-            httpd.serve_forever()
-        except KeyboardInterrupt:
-            print("\n  Server stopped. Goodbye!\n")
-            httpd.shutdown()
+    url = f"http://localhost:{actual_port}"
+    print(f"\n  MD Studio is running!")
+    print(f"  Open in browser --> {url}")
+    print(f"  Serving from:    {os.getcwd()}")
+    print(f"\n  Press Ctrl+C to stop the server.\n")
+
+    # Open browser after a short delay (server needs to be ready)
+    threading.Timer(0.8, lambda: webbrowser.open(url)).start()
+
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        print("\n  Server stopped. Goodbye!\n")
+        httpd.shutdown()
+    finally:
+        httpd.server_close()
 
 
 # ─── Entry Point ──────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     try:
-        port = find_free_port(DEFAULT_PORT)
+        sock, port = bind_local_port(DEFAULT_PORT)
         if port != DEFAULT_PORT:
             print(f"  Port {DEFAULT_PORT} is busy, using port {port} instead.")
-        start_server(port)
+        start_server(sock)
     except OSError as e:
         print(e)
         sys.exit(1)
     except Exception as e:
         print(f"  Unexpected error: {e}")
         sys.exit(1)
-#/.venv/Scripts/python.exe" app.py

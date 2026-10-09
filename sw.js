@@ -1,15 +1,18 @@
 // MD Studio — Service Worker v1.0
 // Provides offline caching for all static assets
 
-const CACHE_NAME = 'md-studio-v1';
+const CACHE_NAME = 'md-studio-v2';
 
 // All static assets to cache for offline use
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
+    '/app.html',
     '/css/typography.css',
+    '/css/landing.css',
     '/css/themes.css',
     '/js/app.js',
+    '/js/githubLoader.js',
     '/js/markdownParser.js',
     '/js/tocGenerator.js',
     '/ui/laptop/layout.css',
@@ -58,8 +61,10 @@ self.addEventListener('fetch', (event) => {
         event.respondWith(
             fetch(event.request)
                 .then((response) => {
-                    const cloned = response.clone();
-                    caches.open(CACHE_NAME).then(cache => cache.put(event.request, cloned));
+                    if (response.ok) {
+                        const cloned = response.clone();
+                        caches.open(CACHE_NAME).then(cache => cache.put(event.request, cloned));
+                    }
                     return response;
                 })
                 .catch(() => caches.match(event.request))
@@ -67,16 +72,14 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // For local assets: cache first, fallback to network
+    // For local assets: network first (so new deploys reach users), fallback to cache
     event.respondWith(
-        caches.match(event.request).then((cached) => {
-            return cached || fetch(event.request).then((response) => {
-                if (response.ok) {
-                    const cloned = response.clone();
-                    caches.open(CACHE_NAME).then(cache => cache.put(event.request, cloned));
-                }
-                return response;
-            });
-        })
+        fetch(event.request).then((response) => {
+            if (response.ok) {
+                const cloned = response.clone();
+                caches.open(CACHE_NAME).then(cache => cache.put(event.request, cloned));
+            }
+            return response;
+        }).catch(() => caches.match(event.request))
     );
 });

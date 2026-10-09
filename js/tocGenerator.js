@@ -15,7 +15,7 @@ const TOCGenerator = {
         }
 
         if (headings.length === 0) {
-            tocList.innerHTML = '<li><a href="#" style="opacity:0.5; font-style:italic;">No headings found</a></li>';
+            tocList.innerHTML = '<li><span style="opacity:0.5; font-style:italic;">No headings found</span></li>';
             return;
         }
 

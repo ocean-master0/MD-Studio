@@ -16,38 +16,90 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.classList.add(effectiveTheme, savedFont, savedWidth);
     document.documentElement.style.setProperty('--line-height', savedLH);
 
+    // Keep mobile browser chrome in sync with the active theme
+    const THEME_COLORS = {
+        'theme-paperwhite': '#ffffff',
+        'theme-sepia': '#fbf0d9',
+        'theme-dark': '#121212',
+    };
+    const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+    if (themeColorMeta && THEME_COLORS[effectiveTheme]) {
+        themeColorMeta.content = THEME_COLORS[effectiveTheme];
+    }
+
+    // Theme-aware favicon — white mark on dark theme, black mark otherwise
+    const FAVICON = {
+        light: 'logo/favicon-black.svg',
+        dark:  'logo/favicon-white.svg',
+    };
+    function setFavicon(theme) {
+        let link = document.querySelector('link[rel~="icon"]');
+        if (!link) {
+            link = document.createElement('link');
+            link.rel = 'icon';
+            link.type = 'image/svg+xml';
+            document.head.appendChild(link);
+        }
+        link.href = theme === 'theme-dark' ? FAVICON.dark : FAVICON.light;
+    }
+    setFavicon(effectiveTheme);
+
+    function setTheme(theme) {
+        Array.from(document.body.classList).forEach(c => {
+            if (c.startsWith('theme-')) document.body.classList.remove(c);
+        });
+        document.body.classList.add(theme);
+        const meta = document.querySelector('meta[name="theme-color"]');
+        if (meta && THEME_COLORS[theme]) meta.content = THEME_COLORS[theme];
+        setFavicon(theme);
+        localStorage.setItem('md-studio-theme', theme);
+    }
+
     // ─── 1. Initialize Markdown Parser ───────────────────────────────────────
-    MarkdownParser.init('md-upload', 'reader', (contentContainer) => {
+    const readerEl = document.getElementById('reader');
+    const onRenderComplete = (contentContainer) => {
         TOCGenerator.generate(contentContainer, 'toc-list');
         // Restore scroll position for this file
         const fileKey = 'scroll_' + (MarkdownParser.currentFileName || 'default');
         const savedScroll = parseInt(localStorage.getItem(fileKey)) || 0;
         if (savedScroll > 0) {
-            setTimeout(() => {
+            requestAnimationFrame(() => {
                 const mc = document.querySelector('.main-content');
                 if (mc) mc.scrollTop = savedScroll;
-            }, 150);
+            });
         }
-    });
+    };
+    MarkdownParser.init('md-upload', readerEl, onRenderComplete);
 
     // ─── 2. Font Size — Fixed initialization ─────────────────────────────────
     // FIX: Read from localStorage directly (CSS variable getter is unreliable)
     let currentFontSize = parseInt(localStorage.getItem('md-studio-fontsize')) || 18;
-    document.documentElement.style.setProperty('--base-font-size', `${currentFontSize}px`);
+    const FONT_SIZE_MIN = 12, FONT_SIZE_MAX = 32;
+
+    function applyFontSize() {
+        document.documentElement.style.setProperty('--base-font-size', `${currentFontSize}px`);
+        localStorage.setItem('md-studio-fontsize', currentFontSize);
+        // Show current size + disable buttons at limits (UX-011)
+        const label = document.getElementById('font-size-value');
+        if (label) label.textContent = `${currentFontSize}px`;
+        const outBtn = document.getElementById('btn-zoom-out');
+        const inBtn  = document.getElementById('btn-zoom-in');
+        if (outBtn) outBtn.disabled = currentFontSize <= FONT_SIZE_MIN;
+        if (inBtn)  inBtn.disabled  = currentFontSize >= FONT_SIZE_MAX;
+    }
+    applyFontSize();
 
     document.getElementById('btn-zoom-in')?.addEventListener('click', () => {
-        if (currentFontSize < 32) {
+        if (currentFontSize < FONT_SIZE_MAX) {
             currentFontSize += 2;
-            document.documentElement.style.setProperty('--base-font-size', `${currentFontSize}px`);
-            localStorage.setItem('md-studio-fontsize', currentFontSize);
+            applyFontSize();
         }
     });
 
     document.getElementById('btn-zoom-out')?.addEventListener('click', () => {
-        if (currentFontSize > 12) {
+        if (currentFontSize > FONT_SIZE_MIN) {
             currentFontSize -= 2;
-            document.documentElement.style.setProperty('--base-font-size', `${currentFontSize}px`);
-            localStorage.setItem('md-studio-fontsize', currentFontSize);
+            applyFontSize();
         }
     });
 
@@ -56,18 +108,47 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', (e) => {
             const theme = e.currentTarget.dataset.theme;
             if (!theme) return;
-            document.body.className = document.body.className.replace(/theme-\S+/, '').trim();
-            document.body.classList.add(theme);
-            localStorage.setItem('md-studio-theme', theme);
+            setTheme(theme);
         });
     });
 
     // ─── 4. Font Switching ────────────────────────────────────────────────────
+    // Lazy Google Fonts loader (UX-010): only Lora + DM Sans + JetBrains Mono ship
+    // upfront in index.html; the other families load on first selection.
+    const GOOGLE_FONTS = {
+        'font-crimson':      'Crimson+Pro:ital,wght@0,400;0,600;1,400',
+        'font-lora':         'Lora:ital,wght@0,400;0,700;1,400',
+        'font-merriweather': 'Merriweather:ital,wght@0,400;0,700;1,400',
+        'font-source-serif': 'Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400',
+        'font-garamond':     'EB+Garamond:ital,wght@0,400;0,600;1,400',
+        'font-nunito':       'Nunito:wght@300;400;600',
+        'font-dm-sans':      'DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;1,9..40,400',
+        'font-fira-sans':    'Fira+Sans:ital,wght@0,400;0,600;1,400',
+    };
+    const loadedFonts = new Set(['font-lora', 'font-dm-sans']); // shipped in index.html
+
+    function ensureFontLoaded(fontClass) {
+        if (loadedFonts.has(fontClass)) return;
+        const spec = GOOGLE_FONTS[fontClass];
+        if (!spec) return;
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = `https://fonts.googleapis.com/css2?family=${spec}&display=swap`;
+        document.head.appendChild(link);
+        loadedFonts.add(fontClass);
+    }
+
+    // Preload the saved font early (swap font-display prevents flash)
+    ensureFontLoaded(savedFont);
+
     document.querySelectorAll('.font-btn[data-font]').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const font = e.currentTarget.dataset.font;
             if (!font) return;
-            document.body.className = document.body.className.replace(/font-\S+/, '').trim();
+            ensureFontLoaded(font);
+            Array.from(document.body.classList).forEach(c => {
+                if (c.startsWith('font-')) document.body.classList.remove(c);
+            });
             document.body.classList.add(font);
             localStorage.setItem('md-studio-font', font);
         });
@@ -118,11 +199,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (mainContent) mainContent.addEventListener('scroll', updateProgress, { passive: true });
     window.addEventListener('scroll', updateProgress, { passive: true });
 
-    // Save scroll position per-file
+    // Save scroll position per-file (throttled — localStorage writes are synchronous)
     if (mainContent) {
+        let scrollSaveTimer;
         mainContent.addEventListener('scroll', () => {
-            const fileKey = 'scroll_' + (MarkdownParser.currentFileName || 'default');
-            localStorage.setItem(fileKey, mainContent.scrollTop);
+            if (scrollSaveTimer) return;
+            scrollSaveTimer = setTimeout(() => {
+                scrollSaveTimer = null;
+                const fileKey = 'scroll_' + (MarkdownParser.currentFileName || 'default');
+                localStorage.setItem(fileKey, mainContent.scrollTop);
+            }, 500);
         }, { passive: true });
     }
 
@@ -193,9 +279,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const themes = ['theme-paperwhite', 'theme-sepia', 'theme-dark'];
         const current = themes.find(t => document.body.classList.contains(t)) || themes[0];
         const next = themes[(themes.indexOf(current) + 1) % themes.length];
-        document.body.className = document.body.className.replace(/theme-\S+/, '').trim();
-        document.body.classList.add(next);
-        localStorage.setItem('md-studio-theme', next);
+        setTheme(next);
     }
 
     // ─── 10. Print / Export ───────────────────────────────────────────────────
@@ -225,8 +309,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 searchInput.value = lastSearchQuery;
             }
         }
-        searchInput.focus();
-        if (selectAll !== false) searchInput.select();
+        if (searchInput) {
+            searchInput.focus();
+            if (selectAll !== false) searchInput.select();
+        }
 
         // If there's an existing query, keep results in sync
         if (searchInput && searchInput.value && searchMatches.length === 0) {
@@ -425,14 +511,78 @@ document.addEventListener('DOMContentLoaded', () => {
             list.innerHTML = '<li><span style="opacity:0.5;font-style:italic;font-size:0.85rem;">No recent files</span></li>';
             return;
         }
-        list.innerHTML = history.map(f => {
-            const age = formatAge(f.time);
-            return `<li class="history-item">
-                <span class="history-icon">📄</span>
-                <span class="history-name" title="${f.name}">${f.name}</span>
-                <span class="history-time">${age}</span>
-            </li>`;
-        }).join('');
+        list.innerHTML = '';
+        history.forEach(f => {
+            const li = document.createElement('li');
+            li.className = 'history-item';
+            li.setAttribute('role', 'button');
+            li.setAttribute('tabindex', '0');
+            li.title = 'Click to reopen "' + f.name + '" from disk';
+
+            const icon = document.createElement('span');
+            icon.className = 'history-icon';
+            icon.textContent = '📄';
+
+            const name = document.createElement('span');
+            name.className = 'history-name';
+            name.textContent = f.name; // textContent — never parses HTML
+            name.title = f.name;
+
+            const time = document.createElement('span');
+            time.className = 'history-time';
+            time.textContent = formatAge(f.time);
+
+            li.append(icon, name, time);
+
+            // Reopen from disk via the File System Access API (UX-007)
+            const activate = () => openRecentFile(f.name);
+            li.addEventListener('click', activate);
+            li.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); }
+            });
+
+            list.appendChild(li);
+        });
+    }
+
+    function showInfoToast(message) {
+        const toast = document.createElement('div');
+        toast.className = 'info-toast';
+        toast.setAttribute('role', 'status');
+        toast.setAttribute('aria-live', 'polite');
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3500);
+    }
+
+    async function openRecentFile(fileName) {
+        if (!window.showOpenFilePicker) {
+            showInfoToast('Reopen needs the File System Access API (Chromium browsers). Please use the file upload button instead.');
+            return;
+        }
+        try {
+            const [handle] = await window.showOpenFilePicker({
+                multiple: false,
+                types: [{
+                    description: 'Markdown / Text',
+                    accept: {
+                        'text/markdown': ['.md', '.markdown'],
+                        'text/plain': ['.txt'],
+                    },
+                }],
+            });
+            const file = await handle.getFile();
+            // Browsers can't silently reopen a saved path — the picker needs user
+            // consent. If they picked a different file, note it and proceed.
+            if (file.name !== fileName) {
+                showInfoToast(`You picked "${file.name}" — opening that instead of "${fileName}".`);
+            }
+            MarkdownParser.processFile(file, readerEl, onRenderComplete);
+            saveToHistory(file.name);
+        } catch (err) {
+            if (err && (err.name === 'AbortError' || err.name === 'SecurityError')) return;
+            MarkdownParser.showError('Could not reopen file: ' + (err && err.message ? err.message : err));
+        }
     }
 
     function formatAge(ts) {
@@ -478,8 +628,9 @@ document.addEventListener('DOMContentLoaded', () => {
         applyCustomCSS(css);
         // Show brief confirmation toast
         const toast = document.createElement('div');
-        toast.className = 'error-toast';
-        toast.style.background = '#2ea043';
+        toast.className = 'success-toast';
+        toast.setAttribute('role', 'status');
+        toast.setAttribute('aria-live', 'polite');
         toast.textContent = '✅ Custom CSS applied!';
         document.body.appendChild(toast);
         setTimeout(() => toast.remove(), 2000);

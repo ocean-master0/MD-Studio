@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <title>MD Studio - concept C, Woven Hash</title>
+  <g fill="none" stroke="#000000" stroke-width="34" stroke-linecap="butt">
+    <path d="M44 96 H71 M121 96 H212"/>
+    <path d="M44 160 H135 M185 160 H212"/>
+    <path d="M96 44 V135 M96 185 V212"/>
+    <path d="M160 44 V71 M160 121 V212"/>
+  </g>
+</svg>

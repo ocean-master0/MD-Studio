@@ -1,12 +1,24 @@
 const MarkdownParser = {
     currentFileName: null,
-    _rendererConfigured: false,
 
     init: function(fileInputId, renderTargetId, onComplete) {
-        const fileInput = document.getElementById(fileInputId);
-        const readerTarget = document.getElementById(renderTargetId);
+        // Accept either an element ref or an id string for both slots.
+        // getElementById coerces non-strings to "[object HTMLDivElement]" → null,
+        // which silently killed this whole init() when an element was passed.
+        const resolveEl = (ref) => {
+            if (ref && ref.nodeType === 1) return ref;
+            if (typeof ref === 'string' && ref) return document.getElementById(ref);
+            return null;
+        };
+        const fileInput = resolveEl(fileInputId);
+        const readerTarget = resolveEl(renderTargetId);
         if (!fileInput || !readerTarget) {
-            console.error('MD Studio: Could not find #' + fileInputId + ' or #' + renderTargetId);
+            const label = (ref) =>
+                (ref && ref.nodeType === 1)
+                    ? '<' + (ref.tagName.toLowerCase()) + (ref.id ? '#' + ref.id : '') + '>'
+                    : '#' + ref;
+            console.error('MD Studio: Could not find file input ' + label(fileInputId) +
+                          ' or reader target ' + label(renderTargetId));
             return;
         }
 
@@ -21,14 +33,21 @@ const MarkdownParser = {
         fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
+            // Reset AFTER the dispatch finishes. Setting value='' clears
+            // input.files synchronously, so resetting here would starve other
+            // change listeners registered after this one (e.g. the history
+            // saver would see an empty FileList). A microtask runs once every
+            // listener has seen the files, while still clearing well before
+            // the user's next file pick — so same-file re-upload still works.
+            queueMicrotask(() => { fileInput.value = ''; });
             this.processFile(file, readerTarget, onComplete);
         });
 
-        // Also allow clicking the reader area to trigger upload when empty
-        readerTarget.addEventListener('click', (e) => {
-            if (readerTarget.querySelector('h1')?.textContent?.includes('Welcome')) {
-                // Only trigger on the welcome screen
-                // (user might click anywhere to upload)
+        // Allow clicking the welcome screen to trigger upload
+        readerTarget.addEventListener('click', () => {
+            const h1 = readerTarget.querySelector('h1');
+            if (h1 && h1.textContent.includes('Welcome')) {
+                fileInput.click();
             }
         });
 
@@ -40,30 +59,46 @@ const MarkdownParser = {
     // Note: marked@12 still calls renderer methods with the classic (text, level, ...) signatures.
     _setupMarked: function() {
         const renderer = new marked.Renderer();
+        this._usedHeadingIds = new Set();
 
         const slugify = (value) => {
             const raw = String(value || '').replace(/<[^>]*>/g, '');
-            return raw
+            let slug = raw
                 .toLowerCase()
-                .replace(/[^\w\s-]/g, '')
+                .normalize('NFKD')
+                .replace(/[^\p{L}\p{M}\p{N}\s-]/gu, '')
                 .replace(/\s+/g, '-')
-                .replace(/(^-|-$)/g, '')
-                || 'heading';
+                .replace(/(^-|-$)/g, '');
+            if (!slug) slug = 'heading';
+            // Resolve collisions against ALL issued ids (handles e.g. a literal
+            // "Intro 1" heading arriving between two "Intro" headings).
+            let candidate = slug;
+            let n = 0;
+            while (this._usedHeadingIds.has(candidate)) {
+                n += 1;
+                candidate = `${slug}-${n}`;
+            }
+            this._usedHeadingIds.add(candidate);
+            return candidate;
         };
 
         // GitHub-style heading anchors with IDs
         renderer.heading = function(text, level, raw) {
             const id = slugify(raw || text);
-            return `<h${level} id="${id}"><a class="heading-anchor" href="#${id}" aria-hidden="true">#</a>${text}</h${level}>`;
+            return `<h${level} id="${id}"><a class="heading-anchor" href="#${id}" aria-hidden="true" tabindex="-1">#</a>${text}</h${level}>`;
         };
 
-        // External links open in new tab
+        // External links open in new tab; block non-http(s)/mailto URL schemes, escape quotes in title
         renderer.link = function(href, title, text) {
-            const safeHref  = href || '#';
+            let safeHref = href || '#';
+            const hasScheme = /^[a-z][a-z0-9+.-]*:/i.test(safeHref);
+            if (hasScheme && !/^(https?|mailto):/i.test(safeHref)) {
+                safeHref = '#'; // strips javascript:, data:, vbscript:, etc.
+            }
             const safeText  = text || safeHref;
             const isExternal = /^https?:\/\//.test(safeHref);
             const target     = isExternal ? 'target="_blank" rel="noopener noreferrer"' : '';
-            const titleAttr  = title ? `title="${title}"` : '';
+            const titleAttr  = title ? `title="${String(title).replace(/"/g, '&quot;')}"` : '';
             return `<a href="${safeHref}" ${titleAttr} ${target}>${safeText}</a>`;
         };
 
@@ -73,9 +108,11 @@ const MarkdownParser = {
         };
 
         // GitHub-style task list items
-        renderer.listitem = function(text, task, checked) {
+        // Note: marked v12's parser pre-injects renderer.checkbox() into `text`,
+        // so we must NOT add our own <input> — that would render two checkboxes.
+        renderer.listitem = function(text, task) {
             if (task) {
-                return `<li class="task-list-item"><input type="checkbox" ${checked ? 'checked' : ''} disabled> ${text}</li>`;
+                return `<li class="task-list-item">${text}</li>`;
             }
             return `<li>${text}</li>`;
         };
@@ -85,11 +122,7 @@ const MarkdownParser = {
             gfm      : true,
             breaks   : true,
             pedantic : false,
-            mangle   : false,
-            headerIds: false,
         });
-
-        this._rendererConfigured = true;
     },
 
     setupDragDrop: function(readerTarget, onComplete) {
@@ -149,38 +182,113 @@ const MarkdownParser = {
 
         const reader = new FileReader();
         reader.onload = (event) => {
-            const markdownText = event.target.result;
-            if (file.size > 300 * 1024) {
-                setTimeout(() => this.render(markdownText, readerTarget, onComplete), 50);
-            } else {
-                this.render(markdownText, readerTarget, onComplete);
+            let markdownText;
+            try {
+                markdownText = this._decodeText(event.target.result);
+            } catch (err) {
+                this._renderFailed(readerTarget, err);
+                return;
+            }
+            try {
+                if (file.size > 300 * 1024) {
+                    setTimeout(() => {
+                        try { this.render(markdownText, readerTarget, onComplete); }
+                        catch (err) { this._renderFailed(readerTarget, err); }
+                    }, 50);
+                } else {
+                    this.render(markdownText, readerTarget, onComplete);
+                }
+            } catch (err) {
+                this._renderFailed(readerTarget, err);
             }
         };
-        reader.readAsText(file, 'UTF-8');
+        reader.onerror = () => this._renderFailed(readerTarget, new Error('Could not read the file'));
+        reader.readAsArrayBuffer(file);
+    },
+
+    // Decode file bytes robustly (BUG-019): BOM-aware (UTF-8/UTF-16),
+    // strict UTF-8 first, then Windows-1252 fallback for legacy Windows files.
+    _decodeText: function(buffer) {
+        const bytes = new Uint8Array(buffer);
+        if (bytes.length >= 3 && bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF) {
+            return new TextDecoder('utf-8').decode(bytes.subarray(3));
+        }
+        if (bytes.length >= 2 && bytes[0] === 0xFF && bytes[1] === 0xFE) {
+            return new TextDecoder('utf-16le').decode(bytes.subarray(2));
+        }
+        if (bytes.length >= 2 && bytes[0] === 0xFE && bytes[1] === 0xFF) {
+            return new TextDecoder('utf-16be').decode(bytes.subarray(2));
+        }
+        try {
+            return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+        } catch (e) {
+            console.info('MD Studio: file is not valid UTF-8; decoded as Windows-1252.');
+            return new TextDecoder('windows-1252').decode(bytes);
+        }
+    },
+
+    _renderFailed: function(readerTarget, err) {
+        console.error('MD Studio render error:', err);
+        if (readerTarget) readerTarget.innerHTML = '';
+        this.showError('Failed to render document: ' + (err && err.message ? err.message : err));
     },
 
     render: function(markdownText, readerTarget, onComplete) {
         const { content, frontmatter } = this.extractFrontmatter(markdownText);
 
-        // Renderer is configured once in init/_setupMarked — just parse
-        let htmlContent = marked.parse(content);
+        if (this._usedHeadingIds) this._usedHeadingIds.clear();
 
-        // DOMPurify sanitization (security)
-        if (typeof DOMPurify !== 'undefined') {
-            htmlContent = DOMPurify.sanitize(htmlContent, {
-                ALLOWED_TAGS: ['h1','h2','h3','h4','h5','h6','p','br',
-                               'strong','em','del','code','pre','blockquote',
-                               'ul','ol','li','table','thead','tbody','tr',
-                               'th','td','img','a','hr','div','span','input',
-                               'sup','sub','details','summary','kbd','dl','dt','dd'],
-                ALLOWED_ATTR: ['id','class','href','src','alt','title',
-                               'target','rel','tabindex','type','checked',
-                               'disabled','aria-hidden','aria-label','style',
-                               'data-language'],
-            });
+        // Protect math BEFORE parsing. marked runs with `breaks: true`, which turns
+        // the newlines inside a $$…$$ / \[…\] / \(…\) span into <br>, so KaTeX's
+        // auto-render never sees the delimiters and the math never renders.
+        // Swap each math span for a placeholder, parse, then splice the original
+        // math back in as TEXT (never HTML) before KaTeX runs.
+        const mathSpans = [];
+        const protectedContent = content.replace(
+            /\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\]|\\\([\s\S]+?\\\)/g,
+            (match) => {
+                const token = '@@MDMATH' + mathSpans.length + '@@';
+                mathSpans.push({ token, math: match });
+                return token;
+            }
+        );
+
+        // Renderer is configured once in init/_setupMarked — just parse
+        let htmlContent;
+        try {
+            if (typeof marked === 'undefined') {
+                throw new Error('Markdown library failed to load. Check your connection and try again.');
+            }
+            htmlContent = marked.parse(protectedContent);
+        } catch (err) {
+            this._renderFailed(readerTarget, err);
+            return;
         }
 
+        // DOMPurify sanitization (security) — HARD FAIL if unavailable.
+        // Never inject unsanitized HTML: a CDN failure must not become an XSS hole.
+        if (typeof DOMPurify === 'undefined') {
+            this._renderFailed(readerTarget, new Error(
+                'Sanitizer (DOMPurify) failed to load. Refusing to render unsanitized HTML. Check your connection and try again.'
+            ));
+            return;
+        }
+        htmlContent = DOMPurify.sanitize(htmlContent, {
+            ALLOWED_TAGS: ['h1','h2','h3','h4','h5','h6','p','br',
+                           'strong','em','del','code','pre','blockquote',
+                           'ul','ol','li','table','thead','tbody','tr',
+                           'th','td','img','a','hr','div','span','input',
+                           'sup','sub','details','summary','kbd','dl','dt','dd'],
+            ALLOWED_ATTR: ['id','class','href','src','alt','title',
+                           'target','rel','tabindex','type','checked',
+                           'disabled','aria-hidden','aria-label',
+                           'data-language'],
+        });
+
         readerTarget.innerHTML = htmlContent;
+
+        // Put the protected math back (as text) so KaTeX can render it
+        if (mathSpans.length) this._restoreMath(readerTarget, mathSpans);
 
         // GitHub-style callouts: > [!NOTE], > [!TIP], > [!WARNING], > [!CAUTION]
         this.applyCallouts(readerTarget);
@@ -226,7 +334,6 @@ const MarkdownParser = {
         // Scroll to top
         const mainContent = document.querySelector('.main-content');
         if (mainContent) mainContent.scrollTop = 0;
-        document.documentElement.scrollTop = 0;
     },
 
     applyCallouts: function(container) {
@@ -251,6 +358,26 @@ const MarkdownParser = {
 
             // Remove the marker from the first paragraph, preserving the rest
             p.innerHTML = p.innerHTML.replace(/^\s*\[!(NOTE|TIP|WARNING|CAUTION)\]\s*(<br\s*\/?>)?\s*/i, '');
+        });
+    },
+
+    // Splice the original math text back into the DOM (as text, never HTML)
+    _restoreMath: function(container, mathSpans) {
+        const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+        const nodes = [];
+        while (walker.nextNode()) {
+            const v = walker.currentNode.nodeValue;
+            if (v && v.indexOf('@@MDMATH') !== -1) nodes.push(walker.currentNode);
+        }
+        nodes.forEach((node) => {
+            let value = node.nodeValue;
+            for (let i = 0; i < mathSpans.length; i++) {
+                const token = mathSpans[i].token;
+                if (value.indexOf(token) !== -1) {
+                    value = value.split(token).join(mathSpans[i].math);
+                }
+            }
+            node.nodeValue = value;
         });
     },
 
@@ -334,7 +461,7 @@ const MarkdownParser = {
 
         // Initialize mermaid with auto theme detection
         const isDark = document.body.classList.contains('theme-dark');
-        mermaid.initialize({ startOnLoad: false, theme: isDark ? 'dark' : 'neutral', securityLevel: 'loose' });
+        mermaid.initialize({ startOnLoad: false, theme: isDark ? 'dark' : 'neutral', securityLevel: 'strict' });
 
         // Find all ```mermaid code blocks and replace with rendered diagrams
         container.querySelectorAll('pre code.language-mermaid').forEach((block, i) => {
@@ -345,11 +472,14 @@ const MarkdownParser = {
             div.id = 'mermaid-' + i;
             div.textContent = code;
             pre.replaceWith(div);
-            try {
-                mermaid.run({ nodes: [div] });
-            } catch(e) {
-                div.innerHTML = `<div class="mermaid-placeholder">⚠️ Mermaid diagram error: ${e.message}</div>`;
-            }
+            Promise.resolve(mermaid.run({ nodes: [div] })).catch((e) => {
+                // Build the error node via textContent — never interpolate e.message into innerHTML.
+                const holder = document.createElement('div');
+                holder.className = 'mermaid-placeholder';
+                holder.textContent = '⚠️ Mermaid diagram error: ' + (e && e.message ? e.message : 'unknown error');
+                div.innerHTML = ''; // clear any partial render
+                div.appendChild(holder);
+            });
         });
     },
 
@@ -359,7 +489,6 @@ const MarkdownParser = {
             renderMathInElement(container, {
                 delimiters: [
                     { left: '$$', right: '$$', display: true  },
-                    { left: '$',  right: '$',  display: false },
                     { left: '\\(', right: '\\)', display: false },
                     { left: '\\[', right: '\\]', display: true  },
                 ],
@@ -381,6 +510,8 @@ const MarkdownParser = {
     showError: function(message) {
         const toast = document.createElement('div');
         toast.className = 'error-toast';
+        toast.setAttribute('role', 'status');
+        toast.setAttribute('aria-live', 'polite');
         toast.textContent = message;
         document.body.appendChild(toast);
         setTimeout(() => toast.remove(), 3500);

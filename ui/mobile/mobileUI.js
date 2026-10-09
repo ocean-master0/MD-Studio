@@ -10,14 +10,24 @@ document.addEventListener('DOMContentLoaded', () => {
     overlay.className = 'mobile-overlay';
     document.body.appendChild(overlay);
 
+    let lastFocusedBeforeOpen = null;
+
     function toggleMobileSidebar(show) {
         if(sidebar) {
             if (show) {
+                lastFocusedBeforeOpen = document.activeElement;
                 sidebar.classList.add('active');
                 overlay.classList.add('active');
+                // Move focus into the sheet so keyboard users aren't stranded behind the overlay
+                if (closeBtn) closeBtn.focus();
             } else {
                 sidebar.classList.remove('active');
                 overlay.classList.remove('active');
+                // Return focus to whatever opened the sheet
+                if (lastFocusedBeforeOpen && typeof lastFocusedBeforeOpen.focus === 'function') {
+                    lastFocusedBeforeOpen.focus();
+                }
+                lastFocusedBeforeOpen = null;
             }
         }
     }
